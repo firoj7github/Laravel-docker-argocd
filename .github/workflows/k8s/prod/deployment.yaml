@@ -1,0 +1,28 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: laravel-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: laravel
+  template:
+    metadata:
+      labels:
+        app: laravel
+    spec:
+      containers:
+        - name: laravel
+          image: ${{ secrets.DOCKER_USERNAME }}/laravel-app:latest
+          ports:
+            - containerPort: 9000
+          env:
+            - name: DB_HOST
+              value: mysql
+            - name: DB_DATABASE
+              value: laravel
+            - name: DB_USERNAME
+              value: laravel
+            - name: DB_PASSWORD
+              value: secret

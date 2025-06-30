@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: laravel
-          image: ${{ secrets.DOCKER_USERNAME }}/laravel-app:latest
+          image: fkfiroj/laravel-app:latest
           ports:
             - containerPort: 9000
           env:

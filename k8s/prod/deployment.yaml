@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: laravel-app
+  namespace: laravel-prod
 spec:
   replicas: 1
   selector:
@@ -14,7 +15,8 @@ spec:
     spec:
       containers:
         - name: laravel
-          image: fkfiroj/laravel-app:latest
+          image: fkfiroj/laravel-app:latest    # <-- এখানে 'latest' থাকবে আগে, CI সেটাকে রিপ্লেস করবে
+          imagePullPolicy: Always
           ports:
             - containerPort: 9000
           env:

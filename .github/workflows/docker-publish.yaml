@@ -30,7 +30,7 @@ jobs:
           push: true
           tags: ${{ secrets.DOCKER_USERNAME }}/laravel-app:${{ github.sha }}
 
-      - name: Update deployment manifest image tag now
+      - name: Update deployment manifest image tag
         run: |
           echo "Updating deployment image tag to ${{ github.sha }}"
           sed -i "s|fkfiroj/laravel-app:.*|fkfiroj/laravel-app:${{ github.sha }}|" k8s/prod/deployment.yaml

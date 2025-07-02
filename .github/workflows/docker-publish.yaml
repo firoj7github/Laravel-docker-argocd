@@ -35,11 +35,10 @@ jobs:
           echo "Updating deployment image tag to ${{ github.sha }}"
           sed -i "s|fkfiroj/laravel-app:.*|fkfiroj/laravel-app:${{ github.sha }}|" k8s/prod/deployment.yaml
 
-          git config user.name "github-actions"
-          git config user.email "github-actions@github.com"
+          git config --global user.name "github-actions"
+          git config --global user.email "github-actions@github.com"
 
           git add k8s/prod/deployment.yaml
-          git commit -m "Update deployment image tag to ${{ github.sha }}"
+          git commit -m "Update deployment image tag to ${{ github.sha }}" || echo "No changes to commit"
 
-          git remote set-url origin https://${{ secrets.PERSONAL_ACCESS_TOKEN }}@github.com/firoj7github/Laravel-docker-argocd.git
-          git push origin main
+          git push https://x-access-token:${{ secrets.PERSONAL_ACCESS_TOKEN }}@github.com/firoj7github/Laravel-docker-argocd.git HEAD:main

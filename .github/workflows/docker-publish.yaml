@@ -41,5 +41,7 @@ jobs:
           git add k8s/prod/deployment.yaml
           git commit -m "Update deployment image tag to ${{ github.sha }}" || echo "No changes to commit"
 
-          git push https://x-access-token:${{ secrets.PERSONAL_ACCESS_TOKEN }}@github.com/firoj7github/Laravel-docker-argocd.git HEAD:main
-
+          # ✅ Missing line added here:
+          git remote set-url origin https://x-access-token:${{ secrets.PERSONAL_ACCESS_TOKEN }}@github.com/firoj7github/Laravel-docker-argocd.git
+          
+          git push origin main

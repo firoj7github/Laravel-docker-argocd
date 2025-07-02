@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: laravel
-          image: fkfiroj/laravel-app:latest    # <-- এখানে 'latest' থাকবে আগে, CI সেটাকে রিপ্লেস করবে
+          image: fkfiroj/laravel-app:latest   # <-- CI এটা SHA দিয়ে auto update করবে
           imagePullPolicy: Always
           ports:
             - containerPort: 9000
@@ -28,3 +28,31 @@ spec:
               value: laravel
             - name: DB_PASSWORD
               value: secret
+          volumeMounts:
+            - name: storage
+              mountPath: /var/www/storage
+            - name: cache
+              mountPath: /var/www/bootstrap/cache
+
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 9000
+            initialDelaySeconds: 10
+            periodSeconds: 10
+
+      initContainers:
+        - name: init-permission
+          image: busybox
+          command: ['sh', '-c', 'chmod -R 777 /var/www/storage /var/www/bootstrap/cache || true']
+          volumeMounts:
+            - name: storage
+              mountPath: /var/www/storage
+            - name: cache
+              mountPath: /var/www/bootstrap/cache
+
+      volumes:
+        - name: storage
+          emptyDir: {}
+        - name: cache
+          emptyDir: {}

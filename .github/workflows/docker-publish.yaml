@@ -1,4 +1,4 @@
-name: Build, push Docker image and update deployment manifest
+name: Build, Scan, Push and Deploy Laravel App
 
 on:
   push:
@@ -10,38 +10,68 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout source code
-        uses: actions/checkout@v3
+    # ✅ Checkout source code
+    - name: Checkout source code
+      uses: actions/checkout@v3
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+    # ✅ SonarQube Static Analysis
+    - name: SonarQube Scan
+      uses: sonarsource/sonarqube-scan-action@master
+      env:
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        SONAR_HOST_URL: ${{ secrets.SONAR_URL }}
+      with:
+        projectBaseDir: .
 
-      - name: Login to Docker Hub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
+    # ✅ SonarQube Quality Gate
+    - name: Wait & Check Quality Gate
+      uses: sonarsource/sonarqube-quality-gate-action@master
+      env:
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        SONAR_HOST_URL: ${{ secrets.SONAR_URL }}
 
-      - name: Build and push Docker image
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: ./Dockerfile
-          push: true
-          tags: ${{ secrets.DOCKER_USERNAME }}/laravel-app:${{ github.sha }}
+    # ✅ Set up Docker Buildx
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
 
-      - name: Update deployment manifest image tag now
-        run: |
-          echo "Updating deployment image tag to ${{ github.sha }}"
-          sed -i "s|fkfiroj/laravel-app:.*|fkfiroj/laravel-app:${{ github.sha }}|" k8s/prod/deployment.yaml
+    # ✅ Login to Docker Hub
+    - name: Login to Docker Hub
+      uses: docker/login-action@v3
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
 
-          git config --global user.name "github-actions"
-          git config --global user.email "github-actions@github.com"
+    # ✅ Build Docker Image
+    - name: Build Docker image
+      run: |
+        docker build -t ${{ secrets.DOCKER_USERNAME }}/laravel-app:${{ github.sha }} .
 
-          git add k8s/prod/deployment.yaml
-          git commit -m "Update deployment image tag to ${{ github.sha }}" || echo "No changes to commit"
+    # ✅ Trivy Security Scan
+    - name: Trivy Vulnerability Scan
+      uses: aquasecurity/trivy-action@master
+      with:
+        image-ref: ${{ secrets.DOCKER_USERNAME }}/laravel-app:${{ github.sha }}
+        format: table
+        exit-code: 1
+        severity: CRITICAL,HIGH
+        ignore-unfixed: true
+        ignore-policy: .trivyignore
 
-          # ✅ Missing line added here:
-          git remote set-url origin https://x-access-token:${{ secrets.PERSONAL_ACCESS_TOKEN }}@github.com/firoj7github/Laravel-docker-argocd.git
-          
-          git push origin main
+    # ✅ Push Docker Image (only if Trivy passes)
+    - name: Push Docker image
+      run: |
+        docker push ${{ secrets.DOCKER_USERNAME }}/laravel-app:${{ github.sha }}
+
+    # ✅ Update Kubernetes Deployment YAML with new image SHA
+    # - name: Update deployment manifest image tag
+    #   run: |
+    #     echo "Updating image tag to ${{ github.sha }}"
+    #     sed -i "s|fkfiroj/laravel-app:.*|fkfiroj/laravel-app:${{ github.sha }}|" k8s/prod/deployment.yaml
+
+    #     git config --global user.name "github-actions"
+    #     git config --global user.email "github-actions@github.com"
+    #     git remote set-url origin https://x-access-token:${{ secrets.PERSONAL_ACCESS_TOKEN }}@github.com/firoj7github/Laravel-docker-argocd.git
+
+    #     git add k8s/prod/deployment.yaml
+    #     git commit -m "Update image tag to ${{ github.sha }}" || echo "No changes to commit"
+    #     git push origin main

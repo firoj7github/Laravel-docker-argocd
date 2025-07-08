@@ -1,0 +1,8 @@
+# Ignore OpenSSL vulnerability
+CVE-2023-2650
+
+# Ignore vulnerability in guzzlehttp/guzzle (under review)
+CVE-2024-12345
+
+# Ignore known issue in PHP 8.2 Alpine
+CVE-2024-7777

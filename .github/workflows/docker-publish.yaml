@@ -55,7 +55,7 @@ jobs:
         exit-code: 1
         severity: CRITICAL,HIGH
         ignore-unfixed: true
-        ignore-policy: .trivyignore
+        # ignore-policy: .trivyignore
 
     # ✅ Push Docker Image (only if Trivy passes)
     - name: Push Docker image
